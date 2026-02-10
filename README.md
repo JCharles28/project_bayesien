@@ -27,3 +27,14 @@
     ```bash
     pip install -r requirements.txt
     ```
+
+##  Dataset
+- télécharger le dataset depuis Kaggle : [IMDB Movies Dataset](https://www.kaggle.com/datasets/ashishjangra27/imdb-movies-dataset)
+- extraire le fichier `movies.csv` et le placer dans le dossier `data/`
+
+## Lancement
+- sélectionner le kernel de l'environnement virtuel dans Jupyter
+- lancer le notebook
+    ```bash
+    jupyter <chemin vers le notebook choisi>
+    ```
