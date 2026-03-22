@@ -35,6 +35,8 @@
 ## Lancement
 - sélectionner le kernel de l'environnement virtuel dans Jupyter
 - lancer le notebook
-    ```bash
-    jupyter <chemin vers le notebook choisi>
-    ```
+    + en ligne de commande, sur un terminal :
+        ```bash
+        jupyter <chemin vers le notebook choisi>
+        ```
+    + ou depuis le notebook Jupyter, en cliquant sur "Run" pour exécuter les cellules du notebook
