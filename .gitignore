@@ -1,0 +1,12 @@
+
+# environnements
+/.dist
+/env
+
+
+# données
+/data
+
+
+# pdf
+/*.pdf
