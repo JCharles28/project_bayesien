@@ -29,7 +29,9 @@
     ```
 
 ##  Dataset
-- télécharger le dataset depuis Kaggle : [IMDB Movies Dataset](https://www.kaggle.com/datasets/ashishjangra27/imdb-movies-dataset)
+- télécharger le dataset depuis Kaggle :
+    + [IMDB Movies Dataset](https://www.kaggle.com/datasets/ashishjangra27/imdb-movies-dataset)
+    + [IMDB Dataset of Top 1000 Movies and TV Shows](https://www.kaggle.com/datasets/harshitshankhdhar/imdb-dataset-of-top-1000-movies-and-tv-shows)
 - extraire le fichier `movies.csv` et le placer dans le dossier `data/`
 
 ## Lancement
