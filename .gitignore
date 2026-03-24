@@ -2,10 +2,10 @@
 # environnements
 /.dist
 /env
-
+*/__pycache__
 
 # données
-/data
+# /data
 
 
 # pdf
