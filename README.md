@@ -59,6 +59,7 @@
     ```bash
     fastapi run api/main.py --reload --port 8000
     ```
+- accéder à la documentation explicative de l'API (en local) : [http://localhost:8000/docs](http://localhost:8000/docs)
 
 ## Lancement de l'interface graphique (Streamlit)
 
@@ -68,3 +69,5 @@
     ```bash
     streamlit run ./main.py --server.port 8501
     ```
+    
+- accéder à l'interface (en local) : [http://localhost:8501](http://localhost:8501)
