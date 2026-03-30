@@ -1,5 +1,5 @@
 import streamlit as st
-import requests, json
+import requests, json, re, unicodedata, html
 import pandas as pd
 from typing import Dict, Tuple
 
@@ -7,6 +7,7 @@ from typing import Dict, Tuple
 # Données de correspondance pour les encodages
 # ============================================================================
 PATH_DIRECTOR_TO_ENCODED = "data/director_to_encoded.json"
+
 PATH_CERTIFICATE_TO_ENCODED = "data/certificate_to_encoded.json"
 
 PATH_ENCODED_TO_GENRE = "data/encoded_to_genre.json"
@@ -20,8 +21,112 @@ with open(PATH_CERTIFICATE_TO_ENCODED, "r") as f:
 with open(PATH_ENCODED_TO_GENRE, "r") as f:
     dict_encoded_to_genre = json.load(f)
     
+_MOJIBAKE_RE = re.compile(
+    r"[\xc0-\xc3\xc5\xc6\xc8-\xcf\xd0-\xd6\xd8-\xdd\xe0-\xef\xf0-\xf6\xf8-\xfd]"
+    r"[\x80-\xbf]",
+    re.UNICODE,
+)
+
+_OBVIOUS_MARKERS = frozenset([
+    "Ã", "Â", "â€", "Ã©", "Ã¨", "Ã ", "Ã¢", "Ã®", "Ã´", "Ã»",
+    "Ã‡", "Ã±", "Ã¼", "Ã¶", "Ã„", "Ã–", "Ãœ",
+    "â€™", "â€œ", "â€\x9c", "â€\x9d",
+    "Â«", "Â»", "Â°", "Â·",
+    "ï»¿", "â", "¤", "¿", "½", "¼", "¾",
+    "\ufffd"])
+
+_SOURCE_ENCODINGS = ["latin1", "cp1252", "cp850", "iso-8859-15", "mac_roman"]
+MAX_PASSES = 3
+
+def _has_mojibake(s: str) -> bool:
+    if any(marker in s for marker in _OBVIOUS_MARKERS):
+        return True
+    return bool(_MOJIBAKE_RE.search(s))
+
+
+def _unicode_score(s: str) -> float:
+    if not s:
+        return 1.0
+    good = sum(
+        1 for c in s
+        if unicodedata.category(c) in {
+            "Ll", "Lu", "Lt", "Lm", "Lo",
+            "Nd", "Nl", "No",
+            "Pc", "Pd", "Pe", "Pf", "Pi", "Po", "Ps",
+            "Zs", "Sm", "Sc", "So",
+        }
+    )
+    return good / len(s)
+
+
+def _try_repair(s: str) -> str | None:
+    """
+    Retourne la meilleure réparation trouvée, ou None si aucune n'est meilleure.
+    Logique assouplie : on accepte dès que le score ne régresse pas
+    ET qu'il n'y a pas de caractère de remplacement U+FFFD introduit.
+    """
+    best = None
+    best_score = _unicode_score(s)
+
+    for source_enc in _SOURCE_ENCODINGS:
+        try:
+            candidate = s.encode(source_enc).decode("utf-8")
+        except (UnicodeEncodeError, UnicodeDecodeError):
+            continue
+
+        if candidate == s:
+            continue
+
+        # Rejeter si la réparation introduit des caractères de remplacement
+        if "\ufffd" in candidate:
+            continue
+
+        score = _unicode_score(candidate)
+
+        # ✅ Seuil assoupli : accepter si score ≥ original (sans marge arbitraire)
+        # car Ã/©/¡ sont valides → les deux côtés ont un score similaire
+        if score >= best_score:
+            best = candidate
+            best_score = score
+
+    return best
+
+
+def fix_mojibake_text(x):
+    if not isinstance(x, str):
+        return x
+
+    s = x.strip()
+    if not s:
+        return s
+
+    # 1. Supprimer le BOM UTF-8
+    s = s.lstrip("\ufeff")
+
+    # 2. Décoder les entités HTML (&eacute; → é)
+    s_html = html.unescape(s)
+    if s_html != s and "\ufffd" not in s_html:
+        s = s_html
+
+    # 3. Réparation itérative (multi-passes pour double mojibake)
+    for _ in range(MAX_PASSES):
+        if not _has_mojibake(s):
+            break
+        repaired = _try_repair(s)
+        if repaired is None:
+            break
+        s = repaired
+
+    # 4. Normalisation NFC
+    s = unicodedata.normalize("NFC", s)
+
+    return s
+    
 list_directors = list(dict_director_to_encoded.keys())
+list_directors = [fix_mojibake_text(director) for director in list_directors]
+
 list_certificates = list(dict_certificate_to_encoded.keys())
+
 
 
 # ============================================================================
