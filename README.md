@@ -32,6 +32,7 @@
 
 ##  Dataset
 - télécharger le dataset depuis Kaggle :
+    
     + [IMDB Dataset of Top 1000 Movies and TV Shows](https://www.kaggle.com/datasets/harshitshankhdhar/imdb-dataset-of-top-1000-movies-and-tv-shows)
 - extraire le fichier CSV et le placer dans le dossier `data/`
 
@@ -64,6 +65,8 @@
 ## Lancement de l'interface graphique (Streamlit)
 
 - s'assurer que l'environnement virtuel est activé (voir section "Prérequis")
+
+- s'assurer que l'API est lancée (voir section "Lancement de l'API")
 
 - lancer l'interface avec Streamlit sur le port 8501 :
     ```bash
