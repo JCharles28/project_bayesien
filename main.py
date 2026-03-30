@@ -1,84 +1,254 @@
 import streamlit as st
-import requests
+import requests, json
 import pandas as pd
 from typing import Dict, Tuple
+
+# ============================================================================
+# Données de correspondance pour les encodages
+# ============================================================================
+PATH_DIRECTOR_TO_ENCODED = "data/director_to_encoded.json"
+PATH_CERTIFICATE_TO_ENCODED = "data/certificate_to_encoded.json"
+
+PATH_ENCODED_TO_GENRE = "data/encoded_to_genre.json"
+
+with open(PATH_DIRECTOR_TO_ENCODED, "r") as f:
+    dict_director_to_encoded = json.load(f)
+
+with open(PATH_CERTIFICATE_TO_ENCODED, "r") as f:
+    dict_certificate_to_encoded = json.load(f)
+    
+with open(PATH_ENCODED_TO_GENRE, "r") as f:
+    dict_encoded_to_genre = json.load(f)
+    
+list_directors = list(dict_director_to_encoded.keys())
+list_certificates = list(dict_certificate_to_encoded.keys())
+
 
 # ============================================================================
 # Configuration de la page
 # ============================================================================
 st.set_page_config(
-    page_title="Prédiction Multi-Modèles",
-    page_icon="🎬",
+    page_title="CinemIA",
+    page_icon="resources/logo/cinemIA_logo.svg",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-st.title("🎬 Prédiction Multi-Modèles de Genres Cinématographiques")
+# mettre le logo avec le titre à côté
+col_left, col_center, col_right = st.columns([3, 1, 3])
+with col_center:
+    st.image("resources/logo/cinemIA_logo.svg", width=150)
+    
+    
+# st.title("CinemIA")
 st.markdown("---")
+
 
 # ============================================================================
 # Barre latérale - Configuration des endpoints
 # ============================================================================
 with st.sidebar:
+    with st.expander("ℹ️ À propos"):
+        # Centrer l'image
+        col_left, col_center, col_right = st.columns([1, 1, 1])
+        with col_center:
+            st.image("resources/logo/cinemIA_logo.svg", width=100)
+        
+        st.markdown("""
+            
+        **CinemIA**, une application de prédiction de genre de film basée sur des modèles de machine learning.
+        
+        - **Naive Bayes**: Classification probabiliste
+        - **Decision Tree**: Classification par arbre de décision
+        - **XGBoost**: Classification par boosting de gradient
+        
+        Les paramètres d'entrée sont les mêmes pour les deux modèles.
+        
+        """)
+        with st.expander(" Données d'entrée attendues"):
+            st.markdown("""
+            - **Année de sortie** du film
+            - **Durée** du film en minutes
+            - **Note IMDb** : note moyenne des utilisateurs IMDb
+            - **Meta Score** : score agrégé par des professionnels de la critique cinématographique
+            - **Nombre de votes** sur IMDb
+            - **Revenus bruts** du film
+            - **Réalisateur** du film
+            - **Classification d'âge** pour film
+                + 18+ : déconseillé aux moins de 18 ans
+                + 13+ : déconseillé aux moins de 13 ans
+                + pg : nécessite l'accord parental
+                + u : tous publics
+                + nr : non classé
+            
+            """)
+    
+    # st.markdown("---")
+    
     st.header("⚙️ Configuration")
     st.markdown("### Connectez vos endpoints API")
     
+    endpoint = st.text_input(
+        "Endpoint de Prédiction",
+        value="http://localhost:8000",
+        placeholder="http://localhost:8000"
+    )
+    
+    if endpoint:
+        # checker la santé de l'API
+        try:
+            response = requests.get(f"{endpoint}/health", timeout=5)
+            if response.status_code == 200:
+                st.success("✅ API connectée et opérationnelle!")
+            else:
+                st.error(f"❌ Erreur de connexion: {response.status_code}")
+        except requests.exceptions.Timeout:
+            st.error("⏱️ Timeout: L'API ne répond pas (5s)")
+    
     # Champs pour les URLs des endpoints
-    endpoint_bayes = st.text_input(
-        "Endpoint Naive Bayes",
-        value="http://localhost:8000/predict/naive-bayes",
-        placeholder="http://localhost:8000/predict/naive-bayes"
-    )
-    
-    endpoint_tree = st.text_input(
-        "Endpoint Decision Tree",
-        value="http://localhost:8000/predict/decision-tree",
-        placeholder="http://localhost:8000/predict/decision-tree"
-    )
-    
-    st.markdown("---")
-    st.markdown("""
-    **Format attendu pour les requêtes:**
-    ```json
-    {
-        "year": int,
-        "runtime": int,
-        "imdb_rating": float,
-        "meta_score": int,
-        "votes": int,
-        "gross": int,
-        "director_encoded": int,
-        "certificate_encoded": int
-    }
-    ```
-    """)
+    with st.expander("ℹ️ Endpoints détaillés"):
+        endpoint_bayes = st.text_input(
+            "Endpoint Naive Bayes",
+            value="http://localhost:8000/predict/naive_bayes",
+            placeholder="/predict/naive-bayes"
+        )
+        
+        endpoint_tree = st.text_input(
+            "Endpoint Decision Tree",
+            value="http://localhost:8000/predict/decision_tree",
+            placeholder="/predict/decision-tree"
+        )
+        
+        endpoint_xgboost = st.text_input(
+            "Endpoint XGBoost",
+            value="http://localhost:8000/predict/xgboost",
+            placeholder="/predict/xgboost"
+        )
+        
+    # st.markdown("""
+    # **Format attendu pour les données d'entrée:**
+    # ```json
+    # {
+    #     "year": int,
+    #     "runtime": int,
+    #     "imdb_rating": float,
+    #     "meta_score": int,
+    #     "votes": int,
+    #     "gross": int,
+    #     "director_encoded": int,
+    #     "certificate_encoded": int
+    # }
+    # ```
+    # """)
 
 # ============================================================================
 # Formulaire principal
 # ============================================================================
-st.markdown("### 📋 Paramètres du Film")
+st.markdown("### Paramètres du film")
 
-col1, col2, col3, col4 = st.columns(4)
+# Section 1: Informations générales
+with st.container():
+    st.markdown("##### 🎬 Informations Générales")
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        year = st.slider(
+            "📅 Année de sortie",
+            min_value=1900,
+            max_value=2100,
+            value=2020,
+            help="L'année de sortie du film"
+        )
+    
+    with col2:
+        runtime = st.slider(
+            "⏱️ Durée (min)",
+            min_value=0,
+            max_value=500,
+            value=120,
+            step=1,
+            help="La durée du film en minutes"
+        )
 
-with col1:
-    year = st.number_input("Année", min_value=1900, max_value=2100, value=2020, step=1)
-    imdb_rating = st.number_input("Note IMDb", min_value=0.0, max_value=10.0, value=7.5, step=0.1)
+st.divider()
 
-with col2:
-    runtime = st.number_input("Durée (min)", min_value=0, max_value=500, value=120, step=1)
-    meta_score = st.number_input("Meta Score", min_value=0, max_value=100, value=70, step=1)
+# Section 2: Critiques et scores
+with st.container():
+    st.markdown("##### ⭐ Critiques & Scores")
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        imdb_rating = st.slider(
+            "🎯 Note IMDb",
+            min_value=0.0,
+            max_value=10.0,
+            value=7.5,
+            step=0.1,
+            help="Note IMDb sur 10"
+        )
+    
+    with col2:
+        meta_score = st.slider(
+            "🏆 Meta Score",
+            min_value=0,
+            max_value=100,
+            value=70,
+            step=1,
+            help="Score Metacritic sur 100"
+        )
 
-with col3:
-    votes = st.number_input("Votes IMDb", min_value=0, max_value=2000000, value=100000, step=1000)
-    director_encoded = st.number_input("Réalisateur (Code)", min_value=0, max_value=10000, value=1, step=1)
+st.divider()
 
-with col4:
-    gross = st.number_input("Revenus Bruts", min_value=0, max_value=3000000000, value=100000000, step=1000000)
-    certificate_encoded = st.number_input("Certificat (Code)", min_value=0, max_value=10000, value=1, step=1)
+# Section 3: Engagement et revenus
+with st.container():
+    st.markdown("##### 💰 Engagement & Finances")
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        votes = st.number_input(
+            "👥 Votes IMDb",
+            min_value=0,
+            max_value=2000000,
+            value=100000,
+            step=1000,
+            help="Nombre de votes sur IMDb"
+        )
+    
+    with col2:
+        gross = st.number_input(
+            "💵 Revenus Bruts",
+            min_value=0,
+            max_value=3000000000,
+            value=100000000,
+            step=10000,
+            help="Revenus bruts du film"
+        )
+
+st.divider()
+
+# Section 4: Détails
+with st.container():
+    st.markdown("##### 📋 Détails")
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        director_encoded = st.selectbox(
+            "👤 Réalisateur",
+            options=list_directors,
+            help="Sélectionnez le réalisateur du film"
+        )
+    
+    with col2:
+        certificate_encoded = st.selectbox(
+            "🎞️ Certificat",
+            options=list_certificates,
+            help="Sélectionnez le certificat de classification"
+        )
 
 # ============================================================================
 # Construction des données
 # ============================================================================
+
 data = {
     "year": int(year),
     "runtime": int(runtime),
@@ -86,8 +256,8 @@ data = {
     "meta_score": int(meta_score),
     "votes": int(votes),
     "gross": int(gross),
-    "director_encoded": int(director_encoded),
-    "certificate_encoded": int(certificate_encoded)
+    "director_encoded": int(dict_director_to_encoded.get(director_encoded, 0)),
+    "certificate_encoded": int(dict_certificate_to_encoded.get(certificate_encoded, 0))
 }
 
 # ============================================================================
@@ -103,7 +273,9 @@ def call_endpoint(url: str, data: Dict) -> Tuple[bool, str, Dict]:
         if response.status_code == 200:
             return True, "✅ Succès", response.json()
         else:
+            print(data)
             return False, f"❌ Erreur {response.status_code}: {response.text}", {}
+        
     
     except requests.exceptions.Timeout:
         return False, "⏱️ Timeout: Endpoint ne répond pas (5s)", {}
@@ -117,7 +289,8 @@ def call_endpoint(url: str, data: Dict) -> Tuple[bool, str, Dict]:
 # ============================================================================
 # Bouton de prédiction
 # ============================================================================
-col_button1, col_button2, col_button3 = st.columns([1, 1, 2])
+st.markdown("---")
+col_button1, col_button2 = st.columns([2, 2])
 
 with col_button1:
     predict_button = st.button("🚀 Prédire", use_container_width=True, type="primary")
@@ -130,10 +303,10 @@ with col_button2:
 # ============================================================================
 if predict_button:
     st.markdown("---")
-    st.markdown("### 📊 Résultats des Prédictions")
+    st.markdown("### 📊 Résultats")
     
     # Appels parallèles (simulation)
-    col_bayes, col_tree = st.columns(2)
+    col_bayes, col_tree, col_xgboost = st.columns(3)
     
     # Résultats Naive Bayes
     with col_bayes:
@@ -147,10 +320,19 @@ if predict_button:
             # Affichage structuré des résultats
             try:
                 # Adaptez les clés selon votre API
-                if "genre_pred" in result:
-                    st.metric("Genre Prédit", result.get("genre_pred", "N/A"))
+                if "prediction" in result:
+                    if isinstance(result.get("prediction", None), int):
+                        genre_decoded = dict_encoded_to_genre.get(str(result.get("prediction")), "N/A")
+                        st.metric("Genre Prédit", genre_decoded)
                 if "confidence" in result:
-                    st.metric("Confiance", f"{result.get('confidence', 'N/A'):.2f}%")
+                    if isinstance(result.get("confidence", None), (int, float)):
+                        pourcentage_confiance = float(result.get("confidence", 0)) * 100
+                        if pourcentage_confiance < 45:
+                            st.metric(f"Confiance faible, {pourcentage_confiance:.2f}%")
+                        else:
+                            st.metric("Confiance", f"{pourcentage_confiance:.2f}%")
+                    else:
+                        st.metric("Confiance", "N/A")
                 
                 # Affichage brut des données si nécessaire
                 with st.expander("📋 Détails complets"):
@@ -172,10 +354,19 @@ if predict_button:
             
             # Affichage structuré des résultats
             try:
-                if "genre_pred" in result:
-                    st.metric("Genre Prédit", result.get("genre_pred", "N/A"))
+                if "prediction" in result:
+                    if isinstance(result.get("prediction", None), int):
+                        genre_decoded = dict_encoded_to_genre.get(str(result.get("prediction")), "N/A")
+                        st.metric("Genre Prédit", genre_decoded)
                 if "confidence" in result:
-                    st.metric("Confiance", f"{result.get('confidence', 'N/A'):.2f}%")
+                    if isinstance(result.get("confidence", None), (int, float)):
+                        pourcentage_confiance = float(result.get("confidence", 0)) * 100
+                        if pourcentage_confiance < 45:
+                            st.metric(f"Confiance faible, {pourcentage_confiance:.2f}%")
+                        else:
+                            st.metric("Confiance", f"{pourcentage_confiance:.2f}%")
+                    else:
+                        st.metric("Confiance", "N/A")
                 
                 # Affichage brut des données si nécessaire
                 with st.expander("📋 Détails complets"):
@@ -186,18 +377,36 @@ if predict_button:
         else:
             st.error(message)
 
-# ============================================================================
-# Information supplémentaire
-# ============================================================================
-st.markdown("---")
-with st.expander("ℹ️ À propos"):
-    st.markdown("""
-    **Application de Prédiction Multi-Modèles**
-    
-    Cette interface permet de tester vos modèles de ML en appelant vos endpoints API.
-    
-    - **Naive Bayes**: Classification probabiliste
-    - **Decision Tree**: Classification par arbre de décision
-    
-    Les 8 paramètres d'entrée sont les mêmes pour les deux modèles.
-    """)
+    # Résultats XGBoost
+    with col_xgboost:
+        st.markdown("#### ⚡ XGBoost")
+        with st.spinner("Chargement..."):
+            success, message, result = call_endpoint(endpoint_xgboost, data)
+        
+        if success:
+            st.success(message)
+            
+            # Affichage structuré des résultats
+            try:
+                if "prediction" in result:
+                    if isinstance(result.get("prediction", None), int):
+                        genre_decoded = dict_encoded_to_genre.get(str(result.get("prediction")), "N/A")
+                        st.metric("Genre Prédit", genre_decoded)
+                if "confidence" in result:
+                    if isinstance(result.get("confidence", None), (int, float)):
+                        pourcentage_confiance = float(result.get("confidence", 0)) * 100
+                        if pourcentage_confiance < 45:
+                            st.metric(f"Confiance faible, {pourcentage_confiance:.2f}%")
+                        else:
+                            st.metric("Confiance", f"{pourcentage_confiance:.2f}%")
+                    else:
+                        st.metric("Confiance", "N/A")
+                
+                # Affichage brut des données si nécessaire
+                with st.expander("📋 Détails complets"):
+                    st.json(result)
+            except Exception as e:
+                st.error(f"Erreur lors de l'affichage: {str(e)}")
+                st.json(result)
+        else:
+            st.error(message)
