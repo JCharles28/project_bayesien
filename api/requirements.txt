@@ -1,2 +1,5 @@
 joblib
 fastapi[standard]
+pydantic
+pandas
+numpy
