@@ -345,7 +345,7 @@ with st.container():
     
     with col2:
         certificate_encoded = st.selectbox(
-            "🎞️ Certificat",
+            "🎞️ Classification d'âge",
             options=list_certificates,
             help="Sélectionnez le certificat de classification"
         )
