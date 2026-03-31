@@ -68,7 +68,7 @@ API = FastAPI(
 
 @API.get("/")
 def read_root():
-    return {"Hello": "World"}
+    return {"info": "Bienvenue sur l'API de CinemIA. Consultez la documentation pour les points d'accès disponibles."}
 
 # Point d'accès → vérifier la santé/état de l'API
 @API.get("/health")
