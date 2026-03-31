@@ -133,8 +133,8 @@ list_certificates = list(dict_certificate_to_encoded.keys())
 # Configuration de la page
 # ============================================================================
 st.set_page_config(
-    page_title="CinemIA",
-    page_icon="resources/logo/cinemIA_logo2.svg",
+    page_title="ClassiFilm",
+    page_icon="resources/logo/classifilm_logo.svg",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -142,10 +142,10 @@ st.set_page_config(
 # mettre le logo avec le titre à côté
 col_left, col_center, col_right = st.columns([3, 1, 3])
 with col_center:
-    st.image("resources/logo/cinemIA_logo2.svg", width=150)
+    st.image("resources/logo/classifilm_logo.svg", width=180)
     
     
-# st.title("CinemIA")
+# st.title("ClassiFilm")
 st.markdown("---")
 
 
@@ -157,17 +157,17 @@ with st.sidebar:
         # Centrer l'image
         col_left, col_center, col_right = st.columns([1, 1, 1])
         with col_center:
-            st.image("resources/logo/cinemIA_logo2.svg", width=100)
+            st.image("resources/logo/classifilm_logo.svg", width=100)
         
         st.markdown("""
             
-        **CinemIA**, une application de prédiction de genre de film basée sur des modèles de machine learning.
+        **ClassiFilm**, une application de prédiction de genre de film basée sur des modèles de machine learning.
         
         - **Naive Bayes**: Classification probabiliste
         - **Decision Tree**: Classification par arbre de décision
         - **XGBoost**: Classification par boosting de gradient
         
-        Les paramètres d'entrée sont les mêmes pour les deux modèles.
+        Les paramètres d'entrée sont les mêmes pour tous les modèles.
         
         """)
         with st.expander(" Données d'entrée attendues"):
@@ -253,7 +253,7 @@ st.markdown("### Paramètres du film")
 
 # Section 1: Informations générales
 with st.container():
-    st.markdown("##### 🎬 Informations Générales")
+    st.markdown("##### 🎬 Informations générales")
     col1, col2 = st.columns(2)
     
     with col1:
