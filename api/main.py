@@ -60,9 +60,9 @@ certificate_to_encoded = json.load(open(PATH_CERTIFICATE_TO_ENCODED, "r"))
 
 # --- API ---
 API = FastAPI(
-    title="CinemAI API",
+    title="CinemIA API",
     description="""
-    L'API de CinemAI permet de faire des prédictions de genre de film à partir de caractéristiques d'entrée en ayant à disposition plusieurs modèles de machine learning.
+    L'API de CinemIA permet de faire des prédictions de genre de film à partir de caractéristiques d'entrée en ayant à disposition plusieurs modèles de machine learning.
     """
 )
 
