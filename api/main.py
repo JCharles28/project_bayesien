@@ -60,15 +60,15 @@ certificate_to_encoded = json.load(open(PATH_CERTIFICATE_TO_ENCODED, "r"))
 
 # --- API ---
 API = FastAPI(
-    title="CinemIA API",
+    title="ClassiFilm API",
     description="""
-    L'API de CinemIA permet de faire des prédictions de genre de film à partir de caractéristiques d'entrée en ayant à disposition plusieurs modèles de machine learning.
+    L'API de ClassiFilm permet de faire des prédictions de genre de film à partir de caractéristiques d'entrée en ayant à disposition plusieurs modèles de machine learning.
     """
 )
 
 @API.get("/")
 def read_root():
-    return {"info": "Bienvenue sur l'API de CinemIA. Consultez la documentation pour les points d'accès disponibles."}
+    return {"info": "Bienvenue sur l'API de ClassiFilm. Consultez la documentation pour les points d'accès disponibles."}
 
 # Point d'accès → vérifier la santé/état de l'API
 @API.get("/health")
