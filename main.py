@@ -134,7 +134,7 @@ list_certificates = list(dict_certificate_to_encoded.keys())
 # ============================================================================
 st.set_page_config(
     page_title="CinemIA",
-    page_icon="resources/logo/cinemIA_logo.svg",
+    page_icon="resources/logo/cinemIA_logo2.svg",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -142,7 +142,7 @@ st.set_page_config(
 # mettre le logo avec le titre à côté
 col_left, col_center, col_right = st.columns([3, 1, 3])
 with col_center:
-    st.image("resources/logo/cinemIA_logo.svg", width=150)
+    st.image("resources/logo/cinemIA_logo2.svg", width=150)
     
     
 # st.title("CinemIA")
@@ -157,7 +157,7 @@ with st.sidebar:
         # Centrer l'image
         col_left, col_center, col_right = st.columns([1, 1, 1])
         with col_center:
-            st.image("resources/logo/cinemIA_logo.svg", width=100)
+            st.image("resources/logo/cinemIA_logo2.svg", width=100)
         
         st.markdown("""
             
